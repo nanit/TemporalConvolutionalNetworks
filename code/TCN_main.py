@@ -28,7 +28,6 @@ from collections import OrderedDict
 
 import numpy as np
 import matplotlib.pylab as plt
-%matplotlib inline
 
 from scipy import io as sio
 import sklearn.metrics as sm
@@ -43,19 +42,19 @@ from utils import imshow_
 
 # ---------- Directories & User inputs --------------
 # Location of data/features folder
-base_dir = os.path.expanduser("~/TCN_release/")
+base_dir = os.path.expanduser("~/nanit/TemporalConvolutionalNetworks/")
 
 save_predictions = [False, True][1]
 viz_predictions = [False, True][1]
 viz_weights = [False, True][0]
 
 # Set dataset and action label granularity (if applicable)
-dataset = ["50Salads", "JIGSAWS", "MERL", "GTEA"][0]
+dataset = ["50Salads", "JIGSAWS", "MERL", "GTEA"][-1]
 granularity = ["eval", "mid"][1]
 sensor_type = ["video", "sensors"][0]
 
 # Set model and parameters
-model_type = ["SVM", "LSTM", "LC-SC-CRF", "tCNN",  "DilatedTCN", "ED-TCN", "TDNN"][0]
+model_type = ["SVM", "LSTM", "LC-SC-CRF", "tCNN",  "DilatedTCN", "ED-TCN", "TDNN"][-2]
 # causal or acausal? (If acausal use Bidirectional LSTM)
 causal = [False, True][0]
 
