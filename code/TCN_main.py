@@ -42,17 +42,21 @@ from utils import imshow_
 
 def train_TCN():
     # ---------- Directories & User inputs --------------
-    # Location of data/features folder
-    base_dir = os.path.expanduser("~/nanit/TemporalConvolutionalNetworks/")
 
     save_predictions = [False, True][1]
     viz_predictions = [False, True][1]
     viz_weights = [False, True][0]
 
     # Set dataset and action label granularity (if applicable)
-    dataset = ["50Salads", "JIGSAWS", "MERL", "GTEA"][-1]
+    dataset = ["50Salads", "JIGSAWS", "MERL", "GTEA", "Nanit"][-1]
     granularity = ["eval", "mid"][1]
     sensor_type = ["video", "sensors"][0]
+
+    # Location of data/features folder
+    if dataset=='Nanit':
+        base_dir = os.path.expanduser('~/extDisk/TCN/')
+    else:
+        base_dir = os.path.expanduser("~/nanit/TemporalConvolutionalNetworks/")
 
     # Set model and parameters
     model_type = ["SVM", "LSTM", "LC-SC-CRF", "tCNN",  "DilatedTCN", "ED-TCN", "TDNN"][-2]
@@ -64,7 +68,7 @@ def train_TCN():
     n_nodes = [64, 96]
     nb_epoch = 200
     video_rate = 3
-    conv = {'50Salads':25, "JIGSAWS":20, "MERL":5, "GTEA":25}[dataset]
+    conv = {'50Salads':25, "JIGSAWS":20, "MERL":5, "GTEA":25, "Nanit": 25}[dataset]
 
     # Which features for the given dataset
     features = "SpatialCNN"
@@ -78,7 +82,11 @@ def train_TCN():
     if 1:
     # for conv in [5, 10, 15, 20]:
         # Initialize dataset loader & metrics
-        data = datasets.Dataset(dataset, base_dir)
+        if dataset == 'Nanit':
+            data = datasets.NanitDataset(dataset, base_dir)
+        else:
+            data = datasets.Dataset(dataset, base_dir)
+
         trial_metrics = metrics.ComputeMetrics(overlap=.1, bg_class=bg_class)
 
         # Load data for each split
@@ -88,9 +96,14 @@ def train_TCN():
             else:
                 feature_type = "S"
 
-            X_train, y_train, X_test, y_test = data.load_split(features, split=split,
-                                                                sample_rate=video_rate,
-                                                                feature_type=feature_type)
+            if dataset == 'Nanit':
+                X_train, y_train, X_test, y_test = data.load_split(features, split=split,
+                                                                   sample_rate=video_rate,
+                                                                   feature_type=feature_type)
+            else:
+                X_train, y_train, X_test, y_test = data.load_split(features, split=split,
+                                                                    sample_rate=video_rate,
+                                                                    feature_type=feature_type)
 
             if trial_metrics.n_classes is None:
                 trial_metrics.set_classes(data.n_classes)
@@ -225,7 +238,7 @@ def train_TCN():
             if viz_predictions:
                 max_classes = data.n_classes - 1
                 # # Output all truth/prediction pairs
-                plt.figure(split, figsize=(20,10))
+                plt.figure(split, figsize=(20, 10))
                 P_test_ = np.array(P_test)/float(n_classes-1)
                 y_test_ = np.array(y_test)/float(n_classes-1)
                 for i in range(len(y_test)):
@@ -261,6 +274,3 @@ def train_TCN():
         trial_metrics.print_scores()
         trial_metrics.print_trials()
         print()
-
-
-train_TCN()
