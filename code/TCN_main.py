@@ -32,7 +32,7 @@ import matplotlib.pylab as plt
 from scipy import io as sio
 import sklearn.metrics as sm
 from sklearn.svm import LinearSVC
-
+from keras import backend as K
 from keras.utils import np_utils
 
 # TCN imports 
@@ -41,8 +41,27 @@ from utils import imshow_
 
 
 def train_TCN():
-    # ---------- Directories & User inputs --------------
+    def _save_training_plots(history_, root_dir):
+        fig, ax = plt.subplots(2, 1, figsize=(15, 15))
+        ax[0].plot(history_.history['acc'])
+        # ax[0].plot(history_.history['val_acc'])
+        ax[0].set_title('model accuracy')
+        ax[0].set_ylabel('accuracy')
+        ax[0].set_xlabel('epoch')
+        # ax[0].set_legend(['train', 'validation'], loc='upper left')
 
+        ax[1].plot(history_.history['loss'])
+        # ax[1].plot(history_.history['val_acc'])
+        ax[1].set_title('Cross Entropy Loss')
+        ax[1].set_ylabel('loss')
+        ax[1].set_xlabel('epoch')
+        # ax[1].set_legend(['train', 'validation'], loc='upper left')
+        plt.savefig(os.path.join(base_dir, 'training'))
+        plt.show()
+
+    # Make sure we start clean
+    K.clear_session()
+    # ---------- Directories & User inputs --------------
     save_predictions = [False, True][1]
     viz_predictions = [False, True][1]
     viz_weights = [False, True][0]
@@ -87,7 +106,7 @@ def train_TCN():
         else:
             data = datasets.Dataset(dataset, base_dir)
 
-        trial_metrics = metrics.ComputeMetrics(overlap=.1, bg_class=bg_class)
+        trial_metrics = metrics.ComputeMetrics(overlap=.5, bg_class=bg_class)
 
         # Load data for each split
         for split in data.splits:
@@ -161,8 +180,9 @@ def train_TCN():
                 elif model_type == "LSTM":
                     model, param_str = tf_models.BidirLSTM(n_nodes[0], n_classes, n_feat, causal=causal, return_param_str=True)
 
-                model.fit(X_train_m, Y_train_, nb_epoch=nb_epoch, batch_size=8,
-                            verbose=1, sample_weight=M_train[:,:,0])
+                history = model.fit(X_train_m, Y_train_, nb_epoch=nb_epoch, batch_size=8,
+                                    verbose=1, sample_weight=M_train[:, :, 0])
+                _save_training_plots(history, base_dir)
 
                 AP_train = model.predict(X_train_m, verbose=0)
                 AP_test = model.predict(X_test_m, verbose=0)
@@ -248,7 +268,8 @@ def train_TCN():
                     plt.yticks([])
                     acc = np.mean(y_test[i]==P_test[i])*100
                     plt.ylabel("{:.01f}".format(acc))
-                    # plt.title("Acc: {:.03}%".format(100*np.mean(P_test[i]==y_test[i])))
+                    plt.title("Acc: {:.03}%".format(100*np.mean(P_test[i]==y_test[i])))
+                    plt.savefig(os.path.join(base_dir, 'predictions_{}.png'.format(i)))
 
             # ---- Viz weights -----
             if viz_weights and model_type is "TCN":

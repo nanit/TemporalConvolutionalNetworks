@@ -175,10 +175,10 @@ class NanitDataset(Dataset):
         # y_train = [Y_all[fid2idx[f]] for f in file_train if f in fid2idx]
         # y_test = [Y_all[fid2idx[f]] for f in file_test if f in fid2idx]
         # TODO: fix this loader when have more videos
-        X_train = [X_all[0], X_all[0]]
-        X_test = [X_all[0], X_all[0]]
-        y_train = [Y_all[0], Y_all[0]]
-        y_test = [Y_all[0], Y_all[0]]
+        X_train = [X_all[0], X_all[1]]
+        X_test = [X_all[0], X_all[1]]
+        y_train = [Y_all[0], Y_all[1]]
+        y_test = [Y_all[0], Y_all[1]]
 
         if len(X_train)==0:
             print("Error loading data")
