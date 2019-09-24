@@ -41,7 +41,7 @@ from utils import imshow_
 
 
 def train_TCN():
-    def _save_training_plots(history_, root_dir):
+    def _save_training_plots(history_, title=''):
         fig, ax = plt.subplots(2, 1, figsize=(15, 15))
         ax[0].plot(history_.history['acc'])
         # ax[0].plot(history_.history['val_acc'])
@@ -56,7 +56,7 @@ def train_TCN():
         ax[1].set_ylabel('loss')
         ax[1].set_xlabel('epoch')
         # ax[1].set_legend(['train', 'validation'], loc='upper left')
-        plt.savefig(os.path.join(base_dir, 'training'))
+        plt.savefig(os.path.join(base_dir, 'training_{}'.format(title)))
         plt.show()
 
     # Make sure we start clean
@@ -182,7 +182,7 @@ def train_TCN():
 
                 history = model.fit(X_train_m, Y_train_, nb_epoch=nb_epoch, batch_size=8,
                                     verbose=1, sample_weight=M_train[:, :, 0])
-                _save_training_plots(history, base_dir)
+                _save_training_plots(history, 'testing')
 
                 AP_train = model.predict(X_train_m, verbose=0)
                 AP_test = model.predict(X_test_m, verbose=0)
@@ -295,3 +295,4 @@ def train_TCN():
         trial_metrics.print_scores()
         trial_metrics.print_trials()
         print()
+        plt.show()

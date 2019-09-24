@@ -3,6 +3,8 @@ import numpy as np
 import scipy.ndimage as nd
 import scipy.io as sio
 import utils
+import matplotlib.pyplot as plt
+
 
 def closest_file(fid, extension=".mat"):
     # Fix occasional issues with extensions (e.g. X.mp4.mat)
@@ -174,13 +176,24 @@ class NanitDataset(Dataset):
         #
         # y_train = [Y_all[fid2idx[f]] for f in file_train if f in fid2idx]
         # y_test = [Y_all[fid2idx[f]] for f in file_test if f in fid2idx]
-        # TODO: fix this loader when have more videos
-        X_train = [X_all[0], X_all[1]]
-        X_test = [X_all[0], X_all[1]]
-        y_train = [Y_all[0], Y_all[1]]
-        y_test = [Y_all[0], Y_all[1]]
 
-        if len(X_train)==0:
+        # TODO: fix this loader when have more videos
+        # for n, x in enumerate(X_all):
+        #     fig, ax = plt.subplots(2, 1)
+        #     ax[0].hist(x=X_all[n][0])
+        #     ax[0].set_title('PAP last layer')
+        #     X_all[n] = 5 * np.random.randn(*x.shape)
+        #     ax[1].hist(x=X_all[n][0])
+        #     ax[1].set_title('Random')
+        #     plt.savefig('/home/nimrod/Downloads/random_features_example_{}.png'.format(n))
+            # plt.show()
+
+        X_train = X_all #[X_all[0], X_all[0]]
+        X_test = X_train
+        y_train = Y_all #[Y_all[0], Y_all[0]]
+        y_test = y_train
+
+        if len(X_train) == 0:
             print("Error loading data")
 
         return X_train, y_train, X_test, y_test
