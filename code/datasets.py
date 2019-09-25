@@ -178,20 +178,20 @@ class NanitDataset(Dataset):
         # y_test = [Y_all[fid2idx[f]] for f in file_test if f in fid2idx]
 
         # TODO: fix this loader when have more videos
-        # for n, x in enumerate(X_all):
-        #     fig, ax = plt.subplots(2, 1)
-        #     ax[0].hist(x=X_all[n][0])
-        #     ax[0].set_title('PAP last layer')
-        #     X_all[n] = 5 * np.random.randn(*x.shape)
-        #     ax[1].hist(x=X_all[n][0])
-        #     ax[1].set_title('Random')
-        #     plt.savefig('/home/nimrod/Downloads/random_features_example_{}.png'.format(n))
+        for n, x in enumerate(X_all):
+            # fig, ax = plt.subplots(2, 1)
+            # ax[0].hist(x=X_all[n][0], bins=100)
+            # ax[0].set_title('PAP last layer')
+            # X_all[n] = 1 * np.random.randn(*x.shape)
+            # ax[1].hist(x=X_all[n][0], bins=100)
+            # ax[1].set_title('Random')
+            # plt.savefig('/home/nimrod/extDisk/TCN/random_features_example_{}.png'.format(n))
             # plt.show()
 
-        X_train = X_all #[X_all[0], X_all[0]]
-        X_test = X_train
+        X_train = X_all#[X_all[0], X_all[0]]
+        X_test = X_all #[X_all[0], X_all[0]]
         y_train = Y_all #[Y_all[0], Y_all[0]]
-        y_test = y_train
+        y_test = Y_all #[Y_all[0], Y_all[0]]
 
         if len(X_train) == 0:
             print("Error loading data")
