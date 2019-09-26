@@ -72,7 +72,7 @@ def train_TCN():
     sensor_type = ["video", "sensors"][0]
 
     # Location of data/features folder
-    if dataset=='Nanit':
+    if dataset == 'Nanit':
         base_dir = os.path.expanduser('~/extDisk/TCN/')
     else:
         base_dir = os.path.expanduser("~/nanit/TemporalConvolutionalNetworks/")
@@ -83,7 +83,7 @@ def train_TCN():
     causal = [False, True][0]
 
     # How many latent states/nodes per layer of network
-    # Only applicable to the TCNs. The ECCV and LSTM  model suses the first element from this list.
+    # Only applicable to the TCNs. The ECCV and LSTM  model uses the first element from this list.
     n_nodes = [64, 96]
     nb_epoch = 200
     video_rate = 3
