@@ -3,7 +3,10 @@ import numpy as np
 import scipy.ndimage as nd
 import scipy.io as sio
 import utils
+
 import matplotlib.pyplot as plt
+
+
 
 
 def closest_file(fid, extension=".mat"):
@@ -64,6 +67,7 @@ class Dataset:
     def load_split(self, features, split, feature_type="X", sample_rate=1):
         # Setup directory and filenames
         dir_features = self.feature_path(features)
+        output_features_dir = os.path.expanduser('~/extDisk/TCN/GTEA/output_features_2')
 
         # Get splits for this partion of data
         if self.activity==None:
@@ -89,7 +93,7 @@ class Dataset:
         X_all, Y_all = [], []
         for f in files_features:        
             if "Split_" in os.listdir(dir_features)[-1]:
-                data_tmp = sio.loadmat( closest_file("{}{}/{}".format(dir_features,split, f)) )
+                data_tmp = sio.loadmat( closest_file("{}{}/{}".format(dir_features, split, f)) )
             else:
                 data_tmp = sio.loadmat( closest_file("{}/{}".format(dir_features, f)) )
             X_all += [ data_tmp[feature_type].astype(np.float32) ]
@@ -126,7 +130,8 @@ class Dataset:
 
 
 class NanitDataset(Dataset):
-    def __init__(self, name, base_dir):
+    def __init__(self, name, base_dir, norm=True):
+        self.do_normalization = norm
         super(NanitDataset, self).__init__(name, base_dir)
 
     def load_split(self, features, split, feature_type="X", sample_rate=1):
@@ -147,7 +152,7 @@ class NanitDataset(Dataset):
 
         X_all, Y_all = [], []
         for f in files_features:
-            data_tmp = (np.load(os.path.join(dir_features, split, f))).item()
+            data_tmp = (np.load(os.path.join(dir_features, split, 'PAP', f), allow_pickle=True)).item()
 
             X_all += [ data_tmp[feature_type] ]
             Y_all += [ data_tmp["Y"] ]
@@ -164,37 +169,31 @@ class NanitDataset(Dataset):
             Y_all = utils.remap_labels(Y_all)
             print("Reordered class labels")
 
+        # Data Normalization
+        if self.do_normalization:
+            # TODO: fix this loader when have more videos
+            for n, x in enumerate(X_all):
+                # x_ = (x - x.mean()) / (x.std() + 1e-10)
+                m_ax0_time = x.mean(axis=0, keepdims=True)
+                # m_ax1_ftrs = x.mean(axis=1, keepdims=True)
+                std_ax0_time = x.std(axis=0, keepdims=True)
+                # std_ax1_ftrs = x.std(axis=1, keepdims=True)
+
+                x_ = (x - m_ax0_time) / (std_ax0_time + 1e-10)
+                # x_ = (x_ - m_ax1_ftrs) / (std_ax1_ftrs + 1e-10)
+                X_all[n] = x_
+
         # Subsample the data
         if sample_rate > 1:
             X_all, Y_all = utils.subsample(X_all, Y_all, sample_rate, dim=0)
 
-        # ------------Train/test Splits---------------------------
-        # Split data/labels into train/test splits
-        # fid2idx = self.fid2idx(files_features, extensions=['.npy'])
-        # X_train = [X_all[fid2idx[f]] for f in file_train if f in fid2idx]
-        # X_test = [X_all[fid2idx[f]] for f in file_test if f in fid2idx]
-        #
-        # y_train = [Y_all[fid2idx[f]] for f in file_train if f in fid2idx]
-        # y_test = [Y_all[fid2idx[f]] for f in file_test if f in fid2idx]
+        files_features = [f[f.find('_') + 1:] for f in files_features]  # Ugly workaround
+        fid2idx = self.fid2idx(files_features, extensions=['.npy'])
+        X_train = [X_all[fid2idx[f]] for f in file_train if f in fid2idx]
+        X_test = [X_all[fid2idx[f]] for f in file_test if f in fid2idx]
 
-        # # TODO: fix this loader when have more videos
-        # for n, x in enumerate(X_all):
-        #     fig, ax = plt.subplots(2, 1)
-        #     ax[0].hist(x=X_all[n][0], bins=100)
-        #     ax[0].set_title('PAP last layer - after BN')
-        #     X_all[n] = 1 * np.random.randn(*x.shape)
-        #     s = np.std(X_all[n][0])
-        #     m = np.mean(X_all[n][0])
-        #     X_all[n][0] = (X_all[n][0] - m) / s
-        #     ax[1].hist(x=t, bins=100)
-        #     ax[1].set_title('Normalize')
-        #     plt.savefig('/home/nimrod/extDisk/TCN/random_features_example_{}.png'.format(n))
-        #     plt.show()
-
-        X_train = X_all#[X_all[0], X_all[0]]
-        X_test = X_all #[X_all[0], X_all[0]]
-        y_train = Y_all #[Y_all[0], Y_all[0]]
-        y_test = Y_all #[Y_all[0], Y_all[0]]
+        y_train = [Y_all[fid2idx[f]] for f in file_train if f in fid2idx]
+        y_test = [Y_all[fid2idx[f]] for f in file_test if f in fid2idx]
 
         if len(X_train) == 0:
             print("Error loading data")
@@ -203,7 +202,7 @@ class NanitDataset(Dataset):
 
     def get_files(self, dir_features, split=None):
         if "Split_0" in os.listdir(dir_features):
-            files_features = np.sort(os.listdir(dir_features + "/{}/".format(split)))
+            files_features = np.sort(os.listdir(dir_features + "/{}/TCN_FE/".format(split)))
 
         files_features = [f for f in files_features if f.find(".npy") >= 0]
         return files_features

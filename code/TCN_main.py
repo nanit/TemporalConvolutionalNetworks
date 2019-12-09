@@ -56,7 +56,7 @@ def train_TCN():
         ax[1].set_ylabel('loss')
         ax[1].set_xlabel('epoch')
         # ax[1].set_legend(['train', 'validation'], loc='upper left')
-        plt.savefig(os.path.join(base_dir, 'training_{}'.format(title)))
+        plt.savefig(os.path.join(base_dir, '{}_training_plots.png'.format(title)))
         plt.show()
 
     # Make sure we start clean
@@ -86,7 +86,7 @@ def train_TCN():
     # Only applicable to the TCNs. The ECCV and LSTM  model uses the first element from this list.
     n_nodes = [64, 96]
     nb_epoch = 200
-    video_rate = 3
+    video_rate = 1
     conv = {'50Salads':25, "JIGSAWS":20, "MERL":5, "GTEA":25, "Nanit": 25}[dataset]
 
     # Which features for the given dataset
@@ -102,7 +102,7 @@ def train_TCN():
     # for conv in [5, 10, 15, 20]:
         # Initialize dataset loader & metrics
         if dataset == 'Nanit':
-            data = datasets.NanitDataset(dataset, base_dir)
+            data = datasets.NanitDataset(dataset, base_dir, False)
         else:
             data = datasets.Dataset(dataset, base_dir)
 
@@ -115,14 +115,9 @@ def train_TCN():
             else:
                 feature_type = "S"
 
-            if dataset == 'Nanit':
-                X_train, y_train, X_test, y_test = data.load_split(features, split=split,
+            X_train, y_train, X_test, y_test = data.load_split(features, split=split,
                                                                    sample_rate=video_rate,
                                                                    feature_type=feature_type)
-            else:
-                X_train, y_train, X_test, y_test = data.load_split(features, split=split,
-                                                                    sample_rate=video_rate,
-                                                                    feature_type=feature_type)
 
             if trial_metrics.n_classes is None:
                 trial_metrics.set_classes(data.n_classes)
@@ -178,11 +173,12 @@ def train_TCN():
                     model, param_str = tf_models.Dilated_TCN(n_feat, n_classes, n_nodes[0], L, B, max_len=max_len,
                                             causal=causal, return_param_str=True)
                 elif model_type == "LSTM":
-                    model, param_str = tf_models.BidirLSTM(n_nodes[0], n_classes, n_feat, causal=causal, return_param_str=True)
+                    model, param_str = tf_models.BidirLSTM(n_nodes[0], n_classes, n_feat, causal=causal,
+                                                           return_param_str=True)
 
                 history = model.fit(X_train_m, Y_train_, nb_epoch=nb_epoch, batch_size=8,
                                     verbose=1, sample_weight=M_train[:, :, 0])
-                _save_training_plots(history, 'testing')
+                _save_training_plots(history, 'TCN_FE_no_norm_time_axis')
 
                 AP_train = model.predict(X_train_m, verbose=0)
                 AP_test = model.predict(X_test_m, verbose=0)
@@ -204,7 +200,8 @@ def train_TCN():
                 X_test_T = [x.T for x in X_test]
                 n_latent_per_class = 4
                 skip = conv
-                model = models.LatentConvModel(n_latent=n_latent_per_class, conv_len=conv, skip=skip, prior=True, debug=True)
+                model = models.LatentConvModel(n_latent=n_latent_per_class, conv_len=conv, skip=skip,
+                                               prior=True, debug=True)
                 model.fit(X_train_T, y_train, n_iter=200, learning_rate=.1, pretrain=True, verbose=True)
                 model.filter_len = conv//2+1 if conv>1 else 1
                 P_test = model.predict(X_test_T, inference="filtered")
@@ -269,7 +266,8 @@ def train_TCN():
                     acc = np.mean(y_test[i]==P_test[i])*100
                     plt.ylabel("{:.01f}".format(acc))
                     plt.title("Acc: {:.03}%".format(100*np.mean(P_test[i]==y_test[i])))
-                    plt.savefig(os.path.join(base_dir, 'predictions_{}.png'.format(i)))
+                    plt.savefig(os.path.join(base_dir,
+                                             'predictions_TCN_FE_no_norm_{}.png'.format(i)))
 
             # ---- Viz weights -----
             if viz_weights and model_type is "TCN":
