@@ -148,14 +148,18 @@ class NanitDataset(Dataset):
         self.trials_test = file_test
 
         # Get all features
-        files_features = self.get_files(dir_features, split)
+        FE_type = 'PAP'
+        files_features = self.get_files(dir_features, split, FE_type)
 
         X_all, Y_all = [], []
         for f in files_features:
-            data_tmp = (np.load(os.path.join(dir_features, split, 'PAP', f), allow_pickle=True)).item()
-
+            data_tmp = (np.load(os.path.join(dir_features, split, FE_type, f), allow_pickle=True)).item()
+            assert data_tmp[feature_type].shape[0] == data_tmp['Y'].shape[0], \
+                "{} - Length mismatch between GT and data".format(f)
             X_all += [ data_tmp[feature_type] ]
             Y_all += [ data_tmp["Y"] ]
+
+            assert len(np.unique(data_tmp["Y"])) <= 2, "Wrong classes in file {}".format(f)
 
         # Make sure axes are correct (TxF not FxT for F=feat, T=time)
         assert X_all[0].shape[0] == Y_all[0].shape[0], 'Features and Labels have different lengths'
@@ -200,9 +204,9 @@ class NanitDataset(Dataset):
 
         return X_train, y_train, X_test, y_test
 
-    def get_files(self, dir_features, split=None):
+    def get_files(self, dir_features, split=None, FE_type='PAP'):
         if "Split_0" in os.listdir(dir_features):
-            files_features = np.sort(os.listdir(dir_features + "/{}/TCN_FE/".format(split)))
+            files_features = np.sort(os.listdir(dir_features + "/{}/{}/".format(split, FE_type)))
 
         files_features = [f for f in files_features if f.find(".npy") >= 0]
         return files_features
