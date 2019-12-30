@@ -27,6 +27,8 @@ import os
 from collections import OrderedDict
 
 import numpy as np
+import matplotlib
+matplotlib.use('Agg')
 import matplotlib.pylab as plt
 
 from scipy import io as sio
@@ -34,13 +36,14 @@ import sklearn.metrics as sm
 from sklearn.svm import LinearSVC
 from keras import backend as K
 from keras.utils import np_utils
+from keras.models import load_model
 
 # TCN imports 
 import tf_models, datasets, utils, metrics
 from utils import imshow_
 
 
-def train_TCN():
+def train_TCN(feature_extractor):
     def _save_training_plots(history_, title=''):
         fig, ax = plt.subplots(2, 1, figsize=(15, 15))
         ax[0].plot(history_.history['acc'])
@@ -57,7 +60,7 @@ def train_TCN():
         ax[1].set_xlabel('epoch')
         # ax[1].set_legend(['train', 'validation'], loc='upper left')
         plt.savefig(os.path.join(base_dir, '{}_training_plots.png'.format(title)))
-        plt.show()
+        # plt.show()
 
     # Make sure we start clean
     K.clear_session()
@@ -65,6 +68,7 @@ def train_TCN():
     save_predictions = [False, True][1]
     viz_predictions = [False, True][1]
     viz_weights = [False, True][0]
+    save_model = [False, True][1]
 
     # Set dataset and action label granularity (if applicable)
     dataset = ["50Salads", "JIGSAWS", "MERL", "GTEA", "Nanit"][-1]
@@ -102,12 +106,13 @@ def train_TCN():
     # for conv in [5, 10, 15, 20]:
         # Initialize dataset loader & metrics
         if dataset == 'Nanit':
-            data = datasets.NanitDataset(dataset, base_dir, False)
+            data = datasets.NanitDataset(dataset, base_dir, feature_extractor, True)
         else:
             data = datasets.Dataset(dataset, base_dir)
 
         trial_metrics = metrics.ComputeMetrics(overlap=.5, bg_class=bg_class)
 
+        exp_title = '{}_norm_time_axis_SW_data'.format(feature_extractor)
         # Load data for each split
         for split in data.splits:
             if sensor_type=="video":
@@ -178,10 +183,16 @@ def train_TCN():
 
                 history = model.fit(X_train_m, Y_train_, nb_epoch=nb_epoch, batch_size=8,
                                     verbose=1, sample_weight=M_train[:, :, 0])
-                _save_training_plots(history, 'TCN_FE_no_norm_time_axis')
+                _save_training_plots(history, exp_title)
+                if save_model:
+                    model_dir = os.path.join(base_dir, 'models')
+                    model.save(os.path.join(model_dir, '{}.h5'.format(exp_title)))
 
-                AP_train = model.predict(X_train_m, verbose=0)
-                AP_test = model.predict(X_test_m, verbose=0)
+                # model_path = '/home/nimrod/extDisk/TCN/models/{}_norm_time_axis_SW_data.h5'.format(feature_extractor)
+                # loaded_model = load_model(model_path)
+
+                AP_train = loaded_model.predict(X_train_m, verbose=0)
+                AP_test = loaded_model.predict(X_test_m, verbose=0)
                 AP_train = utils.unmask(AP_train, M_train)
                 AP_test = utils.unmask(AP_test, M_test)
 
@@ -242,14 +253,14 @@ def train_TCN():
 
             # ----- Save predictions -----
             if save_predictions:
-                dir_out = os.path.expanduser(base_dir+"/predictions/{}/{}/".format(dataset,param_str))
+                dir_out = os.path.expanduser(base_dir+"/predictions/{}/{}/".format(dataset, param_str))
 
                 # Make sure folder exists
                 if not os.path.isdir(dir_out):
                     os.makedirs(dir_out)
 
                 out = {"P":P_test, "Y":y_test, "S":AP_test}
-                sio.savemat( dir_out+"/{}.mat".format(split), out)
+                sio.savemat( dir_out+"/{}_{}.mat".format(feature_extractor, split), out)
 
             # ---- Viz predictions -----
             if viz_predictions:
@@ -258,17 +269,24 @@ def train_TCN():
                 plt.figure(split, figsize=(20, 10))
                 P_test_ = np.array(P_test)/float(n_classes-1)
                 y_test_ = np.array(y_test)/float(n_classes-1)
+
+                # P_train_ = np.array(P_train) / float(n_classes - 1)
+                # y_train_ = np.array(y_train) / float(n_classes - 1)
+
+                test_cases = data.trials_test
+                accs = []
                 for i in range(len(y_test)):
                     P_tmp = np.vstack([y_test_[i], P_test_[i]])
                     plt.subplot(n_test,1,i+1); imshow_(P_tmp, vmin=0, vmax=1)
                     plt.xticks([])
                     plt.yticks([])
                     acc = np.mean(y_test[i]==P_test[i])*100
+                    accs.append(acc)
                     plt.ylabel("{:.01f}".format(acc))
-                    plt.title("Acc: {:.03}%".format(100*np.mean(P_test[i]==y_test[i])))
+                    plt.title("{} - Acc: {:.03}%".format(test_cases[i], acc))
+                    plt.suptitle('Average Acc: {}'.format(np.mean(accs)))
                     plt.savefig(os.path.join(base_dir,
-                                             'predictions_TCN_FE_no_norm_{}.png'.format(i)))
-
+                                             exp_title + '_{}_loaded_train.png'.format(i)))
             # ---- Viz weights -----
             if viz_weights and model_type is "TCN":
                 # Output weights at the first layer

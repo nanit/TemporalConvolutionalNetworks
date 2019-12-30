@@ -77,7 +77,7 @@ class Dataset:
             file_train = open(self.base_dir+"splits/{}/{}/{}/train.txt".format(self.name, self.activity, split)).readlines()
             file_test = open( self.base_dir+"splits/{}/{}/{}/test.txt".format(self.name, self.activity, split)).readlines()         
         file_train = [f.strip() for f in file_train]
-        file_test = [f.strip() for f in file_test]     
+        file_test = [f.strip() for f in file_test]
 
         # Remove extension
         if  "." in file_train[0]:
@@ -130,9 +130,10 @@ class Dataset:
 
 
 class NanitDataset(Dataset):
-    def __init__(self, name, base_dir, norm=True):
+    def __init__(self, name, base_dir, feature_extractor, norm=True):
         self.do_normalization = norm
         super(NanitDataset, self).__init__(name, base_dir)
+        self.fe = feature_extractor
 
     def load_split(self, features, split, feature_type="X", sample_rate=1):
         # Setup directory and filenames
@@ -148,7 +149,14 @@ class NanitDataset(Dataset):
         self.trials_test = file_test
 
         # Get all features
-        FE_type = 'PAP'
+        if self.fe == 'GTEA':
+            FE_type = 'TCN_FE'
+
+        elif self.fe == 'PAP':
+            FE_type = self.fe
+        else:
+            raise ValueError
+
         files_features = self.get_files(dir_features, split, FE_type)
 
         X_all, Y_all = [], []
@@ -191,7 +199,6 @@ class NanitDataset(Dataset):
         if sample_rate > 1:
             X_all, Y_all = utils.subsample(X_all, Y_all, sample_rate, dim=0)
 
-        files_features = [f[f.find('_') + 1:] for f in files_features]  # Ugly workaround
         fid2idx = self.fid2idx(files_features, extensions=['.npy'])
         X_train = [X_all[fid2idx[f]] for f in file_train if f in fid2idx]
         X_test = [X_all[fid2idx[f]] for f in file_test if f in fid2idx]
