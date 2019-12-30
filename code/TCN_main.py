@@ -91,7 +91,7 @@ def train_TCN(feature_extractor):
     n_nodes = [64, 96]
     nb_epoch = 200
     video_rate = 1
-    conv = {'50Salads':25, "JIGSAWS":20, "MERL":5, "GTEA":25, "Nanit": 25}[dataset]
+    conv = {'50Salads':25, "JIGSAWS":20, "MERL":5, "GTEA":25, "Nanit": 600}[dataset]
 
     # Which features for the given dataset
     features = "SpatialCNN"
