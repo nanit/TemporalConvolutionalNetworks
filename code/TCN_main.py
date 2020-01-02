@@ -180,7 +180,7 @@ def train_TCN(feature_extractor):
                 elif model_type == "LSTM":
                     model, param_str = tf_models.BidirLSTM(n_nodes[0], n_classes, n_feat, causal=causal,
                                                            return_param_str=True)
-
+                model.summary()
                 history = model.fit(X_train_m, Y_train_, nb_epoch=nb_epoch, batch_size=8,
                                     verbose=1, sample_weight=M_train[:, :, 0])
                 _save_training_plots(history, exp_title)
@@ -191,8 +191,11 @@ def train_TCN(feature_extractor):
                 # model_path = '/home/nimrod/extDisk/TCN/models/{}_norm_time_axis_SW_data.h5'.format(feature_extractor)
                 # loaded_model = load_model(model_path)
 
-                AP_train = loaded_model.predict(X_train_m, verbose=0)
-                AP_test = loaded_model.predict(X_test_m, verbose=0)
+                # AP_train = loaded_model.predict(X_train_m, verbose=0)
+                # AP_test = loaded_model.predict(X_test_m, verbose=0)
+
+                AP_train = model.predict(X_train_m, verbose=0)
+                AP_test = model.predict(X_test_m, verbose=0)
                 AP_train = utils.unmask(AP_train, M_train)
                 AP_test = utils.unmask(AP_test, M_test)
 
@@ -286,7 +289,7 @@ def train_TCN(feature_extractor):
                     plt.title("{} - Acc: {:.03}%".format(test_cases[i], acc))
                     plt.suptitle('Average Acc: {}'.format(np.mean(accs)))
                     plt.savefig(os.path.join(base_dir,
-                                             exp_title + '_{}_loaded_train.png'.format(i)))
+                                             exp_title + '_{}.png'.format(i)))
             # ---- Viz weights -----
             if viz_weights and model_type is "TCN":
                 # Output weights at the first layer
