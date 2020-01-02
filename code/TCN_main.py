@@ -25,7 +25,8 @@ Colin Lea
 
 import os
 from collections import OrderedDict
-
+import wandb
+from wandb.keras import WandbCallback
 import numpy as np
 import matplotlib
 matplotlib.use('Agg')
@@ -70,6 +71,10 @@ def train_TCN(feature_extractor):
     viz_weights = [False, True][0]
     save_model = [False, True][1]
 
+    # ---------- Weights and Biases Init --------------
+    os.environ['WANDB_API_KEY'] = 'bdf2ad9180907e156512fa7aa1d388232fbb0bd0'
+    os.environ['WANDB_DISABLE_CODE'] = '*.patch'  # To avoid uploading uncommitted code to WnB cloud
+
     # Set dataset and action label granularity (if applicable)
     dataset = ["50Salads", "JIGSAWS", "MERL", "GTEA", "Nanit"][-1]
     granularity = ["eval", "mid"][1]
@@ -100,6 +105,8 @@ def train_TCN(feature_extractor):
     if dataset == "50Salads":
         features = "SpatialCNN_" + granularity
 
+    wandb.init(project='sleep-wake', notes='TCN: Context-{}, FE-{}'.format(conv, feature_extractor))
+    wandb_callback = WandbCallback(monitor='train_acc', save_model=False)
     # ------------------------------------------------------------------
     # Evaluate using different filter lengths
     if 1:
@@ -182,7 +189,7 @@ def train_TCN(feature_extractor):
                                                            return_param_str=True)
                 model.summary()
                 history = model.fit(X_train_m, Y_train_, nb_epoch=nb_epoch, batch_size=8,
-                                    verbose=1, sample_weight=M_train[:, :, 0])
+                                    verbose=1, sample_weight=M_train[:, :, 0], callbacks=[wandb_callback])
                 _save_training_plots(history, exp_title)
                 if save_model:
                     model_dir = os.path.join(base_dir, 'models')
