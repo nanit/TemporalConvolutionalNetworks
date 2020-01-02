@@ -72,7 +72,7 @@ def train_TCN(feature_extractor):
     save_model = [False, True][1]
 
     # ---------- Weights and Biases Init --------------
-    os.environ['WANDB_API_KEY'] = 'bdf2ad9180907e156512fa7aa1d388232fbb0bd0'
+    os.environ['WANDB_API_KEY'] = 'bdf2ad9180907e156512fa7aa1d388232fbb0bd0'  # TODO:use get_wandb_owner() from master
     os.environ['WANDB_DISABLE_CODE'] = '*.patch'  # To avoid uploading uncommitted code to WnB cloud
 
     # Set dataset and action label granularity (if applicable)
