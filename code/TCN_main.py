@@ -38,6 +38,7 @@ from sklearn.svm import LinearSVC
 from keras import backend as K
 from keras.utils import np_utils
 from keras.models import load_model
+from datetime import datetime
 
 # TCN imports 
 import tf_models, datasets, utils, metrics
@@ -187,26 +188,25 @@ def train_TCN(feature_extractor):
                 elif model_type == "LSTM":
                     model, param_str = tf_models.BidirLSTM(n_nodes[0], n_classes, n_feat, causal=causal,
                                                            return_param_str=True)
+                # model.summary()
+                # history = model.fit(X_train_m, Y_train_, nb_epoch=nb_epoch, batch_size=8,
+                #                     verbose=1, sample_weight=M_train[:, :, 0], callbacks=[wandb_callback])
+                # _save_training_plots(history, exp_title)
+                # if save_model:
+                #     model_dir = os.path.join(base_dir, 'models')
+                #     model.save(os.path.join(model_dir, '{}.h5'.format(exp_title)))
+
+                model_path = '/home/nimrod/extDisk/TCN/models/{}_norm_time_axis_SW_data.h5'.format(feature_extractor)
+                loaded_model = load_model(model_path)
                 model.summary()
-                history = model.fit(X_train_m, Y_train_, nb_epoch=nb_epoch, batch_size=8,
-                                    verbose=1, sample_weight=M_train[:, :, 0], callbacks=[wandb_callback])
-                _save_training_plots(history, exp_title)
-                if save_model:
-                    model_dir = os.path.join(base_dir, 'models')
-                    model.save(os.path.join(model_dir, '{}.h5'.format(exp_title)))
 
-                # model_path = '/home/nimrod/extDisk/TCN/models/{}_norm_time_axis_SW_data.h5'.format(feature_extractor)
-                # loaded_model = load_model(model_path)
-
-                AP_train = loaded_model.predict(X_train_m, verbose=0)
+                # AP_train = loaded_model.predict(X_train_m, verbose=0)
                 AP_test = loaded_model.predict(X_test_m, verbose=0)
 
-                AP_train = model.predict(X_train_m, verbose=0)
-                AP_test = model.predict(X_test_m, verbose=0)
-                AP_train = utils.unmask(AP_train, M_train)
+                # AP_train = utils.unmask(AP_train, M_train)
                 AP_test = utils.unmask(AP_test, M_test)
 
-                P_train = [p.argmax(1) for p in AP_train]
+                # P_train = [p.argmax(1) for p in AP_train]
                 P_test = [p.argmax(1) for p in AP_test]
 
             # --------- ICRA model ----------
@@ -270,7 +270,8 @@ def train_TCN(feature_extractor):
                     os.makedirs(dir_out)
 
                 out = {"P":P_test, "Y":y_test, "S":AP_test}
-                sio.savemat( dir_out+"/{}_{}.mat".format(feature_extractor, split), out)
+                sio.savemat( dir_out+"/{}_{}_{}.mat".format(
+                    feature_extractor, split, datetime.today().strftime('%Y-%m-%d')), out)
 
             # ---- Viz predictions -----
             if viz_predictions:

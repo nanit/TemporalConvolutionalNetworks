@@ -155,7 +155,7 @@ class NanitDataset(Dataset):
         elif self.fe == 'PAP':
             FE_type = self.fe
         else:
-            raise ValueError
+            raise ValueError("unknown feature extractor: {}".format(self.fe))
 
         files_features = self.get_files(dir_features, split, FE_type)
 
