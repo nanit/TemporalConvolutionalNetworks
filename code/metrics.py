@@ -179,9 +179,8 @@ def edit_score(P, Y, norm=True, bg_class=None, **kwargs):
         return levenstein_(P_, Y_, norm)
 
 
-def overlap_f1(P, Y, n_classes=0, bg_class=None, overlap=.1, **kwargs):
-    def overlap_(p,y, n_classes, bg_class, overlap):
-
+def overlap_f1(P, Y, n_classes=0, bg_class=None, overlap=.1, norm=True, **kwargs):
+    def overlap_(p,y, n_classes, bg_class, overlap, norm):
         true_intervals = np.array(utils.segment_intervals(y))
         true_labels = utils.segment_labels(y)
         pred_intervals = np.array(utils.segment_intervals(p))
@@ -194,7 +193,11 @@ def overlap_f1(P, Y, n_classes=0, bg_class=None, overlap=.1, **kwargs):
             pred_intervals = pred_intervals[pred_labels!=bg_class]
             pred_labels = pred_labels[pred_labels!=bg_class]
 
-        n_true = true_labels.shape[0]
+            if norm:
+                true_intervals_lengths = [t_i[-1] - t_i[0] for t_i in true_intervals]
+                pred_intervals_lengths = [p_i[-1] - p_i[0] for p_i in pred_intervals]
+
+        n_true = sum(true_intervals_lengths) if norm else true_labels.shape[0]
         n_pred = pred_labels.shape[0]
 
         # We keep track of the per-class TPs, and FPs.
@@ -215,16 +218,17 @@ def overlap_f1(P, Y, n_classes=0, bg_class=None, overlap=.1, **kwargs):
             # If the IoU is high enough and the true segment isn't already used
             # Then it is a true positive. Otherwise is it a false positive.
             if IoU[idx] >= overlap and not true_used[idx]:
-                TP[pred_labels[j]] += 1
-                true_used[idx] = 1
+                tp_increase_amount = true_intervals_lengths[j] if norm else 1
+                TP[pred_labels[j]] += tp_increase_amount
+                true_used[idx] = tp_increase_amount
             else:
-                FP[pred_labels[j]] += 1
-
+                fp_increase_amount = pred_intervals_lengths[j] if norm else 1
+                FP[pred_labels[j]] += fp_increase_amount
 
         TP = TP.sum()
         FP = FP.sum()
         # False negatives are any unused true segment (i.e. "miss")
-        FN = n_true - true_used.sum()
+        FN = n_true - true_used.sum()  # TODO: handle over-segmentation
         
         precision = TP / (TP+FP)
         recall = TP / (TP+FN)
@@ -236,9 +240,9 @@ def overlap_f1(P, Y, n_classes=0, bg_class=None, overlap=.1, **kwargs):
         return F1*100
 
     if type(P) == list:
-        return np.mean([overlap_(P[i],Y[i], n_classes, bg_class, overlap) for i in range(len(P))])
+        return np.mean([overlap_(P[i],Y[i], n_classes, bg_class, overlap, norm) for i in range(len(P))])
     else:
-        return overlap_(P, Y, n_classes, bg_class, overlap)
+        return overlap_(P, Y, n_classes, bg_class, overlap, norm)
 
 
 def overlap_score(P, Y, bg_class=None, **kwargs):

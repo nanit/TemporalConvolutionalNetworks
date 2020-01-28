@@ -7,13 +7,8 @@ from metrics import *
 
 dataset = ["50Salads", "JIGSAWS", "MERL", "GTEA", "Nanit"][-1]
 # base_dir = os.path.expanduser("~/TCN_release/predictions/{}/".format(dataset))
-base_dir = os.path.expanduser("~/nanit/TemporalConvolutionalNetworks/predictions/{}/".format(dataset))
+base_dir = os.path.expanduser("~/extDisk/TCN/predictions/{}/".format(dataset))
 dirs = np.sort(os.listdir(base_dir))
-
-if dataset == 'Nanit':
-	model_path = '/home/nimrod/extDisk/TCN/models/PAP_norm_time_axis_SW_data.h5'
-	model = load_model(model_path)
-
 
 # Manually set the background class
 bg_class = 0
@@ -63,7 +58,7 @@ for d in dirs:
 	CM.add_predictions(1, P, Y)
 	CM.print_scores()
 
-	overlaps = [overlap_f1(P, Y, n_classes, bg_class, overlap=o) for o in [.1, .25, .5]]
+	overlaps = [overlap_f1(P, Y, n_classes, bg_class, overlap=o, norm=True) for o in [.1, .25, .5]]
 	print("F1@{1,25,50}", ",".join(["{:.03}".format(o) for o in overlaps]))
 
 	f1_scores[d] = overlaps[1]
