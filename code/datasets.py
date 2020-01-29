@@ -144,20 +144,11 @@ class NanitDataset(Dataset):
         self.trials_train = file_train
         self.trials_test = file_test
 
-        # Get all features
-        if self.fe == 'GTEA':
-            FE_type = 'TCN_FE'
-
-        elif self.fe == 'PAP':
-            FE_type = self.fe
-        else:
-            raise ValueError
-
-        files_features = self.get_files(dir_features, split, FE_type)
+        files_features = self.get_files(dir_features, split)
 
         X_all, Y_all = [], []
         for f in files_features:
-            data_tmp = (np.load(os.path.join(dir_features, split, FE_type, f), allow_pickle=True)).item()
+            data_tmp = (np.load(os.path.join(dir_features, split, self.fe, f), allow_pickle=True)).item()
             assert data_tmp[feature_type].shape[0] == data_tmp['Y'].shape[0], \
                 "{} - Length mismatch between GT and data".format(f)
             X_all += [ data_tmp[feature_type] ]
@@ -207,9 +198,9 @@ class NanitDataset(Dataset):
 
         return X_train, y_train, X_test, y_test
 
-    def get_files(self, dir_features, split=None, FE_type='PAP'):
+    def get_files(self, dir_features, split=None):
         if "Split_0" in os.listdir(dir_features):
-            files_features = np.sort(os.listdir(dir_features + "/{}/{}/".format(split, FE_type)))
+            files_features = np.sort(os.listdir(dir_features + "/{}/{}/".format(split, self.fe)))
 
         files_features = [f for f in files_features if f.find(".npy") >= 0]
         return files_features
