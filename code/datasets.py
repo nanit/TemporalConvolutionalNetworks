@@ -4,10 +4,6 @@ import scipy.ndimage as nd
 import scipy.io as sio
 import utils
 
-import matplotlib.pyplot as plt
-
-
-
 
 def closest_file(fid, extension=".mat"):
     # Fix occasional issues with extensions (e.g. X.mp4.mat)
