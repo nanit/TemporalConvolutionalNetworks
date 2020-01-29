@@ -1,17 +1,19 @@
-%matplotlib inline
-
 import os
 import numpy as np
 from scipy import io as sio
-import matplotlib.pylab as plt
 from collections import OrderedDict
-
+from keras.models import Model, load_model
 from metrics import *
 
-dataset = ["50Salads", "JIGSAWS", "MERL", "GTEA"][-2]
+dataset = ["50Salads", "JIGSAWS", "MERL", "GTEA", "Nanit"][-1]
 # base_dir = os.path.expanduser("~/TCN_release/predictions/{}/".format(dataset))
-base_dir = os.path.expanduser("~/libs/TemporalConvolutionalNetworks/predictions/{}/".format(dataset))
+base_dir = os.path.expanduser("~/nanit/TemporalConvolutionalNetworks/predictions/{}/".format(dataset))
 dirs = np.sort(os.listdir(base_dir))
+
+if dataset == 'Nanit':
+	model_path = '/home/nimrod/extDisk/TCN/models/PAP_norm_time_axis_SW_data.h5'
+	model = load_model(model_path)
+
 
 # Manually set the background class
 bg_class = 0
