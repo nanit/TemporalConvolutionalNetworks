@@ -2,11 +2,9 @@ import os
 import numpy as np
 from scipy import io as sio
 from collections import OrderedDict
-from keras.models import Model, load_model
 from metrics import *
 
 dataset = ["50Salads", "JIGSAWS", "MERL", "GTEA", "Nanit"][-1]
-# base_dir = os.path.expanduser("~/TCN_release/predictions/{}/".format(dataset))
 base_dir = os.path.expanduser("~/extDisk/TCN/predictions/{}/".format(dataset))
 dirs = np.sort(os.listdir(base_dir))
 
