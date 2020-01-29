@@ -198,8 +198,8 @@ def train_TCN(feature_extractor):
                 # model_path = '/home/nimrod/extDisk/TCN/models/{}_norm_time_axis_SW_data.h5'.format(feature_extractor)
                 # loaded_model = load_model(model_path)
 
-                # AP_train = loaded_model.predict(X_train_m, verbose=0)
-                # AP_test = loaded_model.predict(X_test_m, verbose=0)
+                AP_train = loaded_model.predict(X_train_m, verbose=0)
+                AP_test = loaded_model.predict(X_test_m, verbose=0)
 
                 AP_train = model.predict(X_train_m, verbose=0)
                 AP_test = model.predict(X_test_m, verbose=0)
